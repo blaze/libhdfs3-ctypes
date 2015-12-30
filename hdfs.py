@@ -111,7 +111,7 @@ class HDFileSystem():
         assert self._handle, "Filesystem not connected"
         return HDFile(self, path, mode, **kwargs)
         
-    def get_block_locations(self, path, start=0, length=None):
+    def get_block_locations(self, path, start=0, length=0):
         "Fetch physical locations of blocks"
         assert self._handle, "Filesystem not connected"
         fi = self.info(path)
