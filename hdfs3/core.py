@@ -403,9 +403,9 @@ class HDFile(object):
                     break
                 if ret > 0:
                     if ret < bufsize:
-                        buffers.append(p.raw[:ret])
+                        buffers.append(p[:ret])
                     elif ret == bufsize:
-                        buffers.append(p.raw)
+                        buffers.append(p)
                     length -= ret
                 else:
                     raise IOError('Read Failed:', -ret)
