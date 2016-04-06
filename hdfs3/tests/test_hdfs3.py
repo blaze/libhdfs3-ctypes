@@ -154,6 +154,11 @@ def test_write_blocksize(hdfs):
         hdfs.open(a, 'rb', block_size=123)
 
 
+def test_write_vbig(hdfs):
+    with hdfs.open(a, 'wb') as f:
+        f.write(b' ' * 2**31)
+
+
 def test_replication(hdfs):
     path = '/tmp/test/afile'
     hdfs.open(path, 'wb', replication=0).close()
