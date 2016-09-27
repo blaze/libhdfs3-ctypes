@@ -11,7 +11,8 @@ PY3 = sys.version_info.major > 2
 
 
 try:
-    _lib = ct.cdll.LoadLibrary('libhdfs3.so')
+    # _lib = ct.cdll.LoadLibrary('libhdfs3.so')
+    _lib = ct.cdll.LoadLibrary('/opt/mapr/support/python/MapRPythonClient.a')
 except OSError:
     raise ImportError("Can not find the shared library: libhdfs3.so\n"
             "See installation instructions at "
@@ -64,28 +65,28 @@ class hdfsFile(ct.Structure):
 class hdfsFS(ct.Structure):
     _fields_ = [('filesystem', ct.c_void_p)]  # TODO: expand this if needed
 
-hdfsGetFileBlockLocations = _lib.hdfsGetFileBlockLocations
-hdfsGetFileBlockLocations.argtypes = [ct.POINTER(hdfsFS), ct.c_char_p,
-                                      tOffset, tOffset, ct.POINTER(ct.c_int)]
-hdfsGetFileBlockLocations.restype = ct.POINTER(BlockLocation)
-hdfsGetFileBlockLocations.__doc__ = """Get an array containing hostnames, offset and size of portions of the given file.
+# hdfsGetFileBlockLocations = _lib.hdfsGetFileBlockLocations
+# hdfsGetFileBlockLocations.argtypes = [ct.POINTER(hdfsFS), ct.c_char_p,
+#                                       tOffset, tOffset, ct.POINTER(ct.c_int)]
+# hdfsGetFileBlockLocations.restype = ct.POINTER(BlockLocation)
+# hdfsGetFileBlockLocations.__doc__ = """Get an array containing hostnames, offset and size of portions of the given file.
+#
+# param fs The file system
+# param path The path to the file
+# param start The start offset into the given file
+# param length The length for which to get locations for
+# param numOfBlock Output the number of elements in the returned array
+# return An array of BlockLocation struct."""
 
-param fs The file system
-param path The path to the file
-param start The start offset into the given file
-param length The length for which to get locations for
-param numOfBlock Output the number of elements in the returned array
-return An array of BlockLocation struct."""
 
-
-hdfsGetLastError = _lib.hdfsGetLastError
-hdfsGetLastError.argtypes = []
-hdfsGetLastError.restype = ct.c_char_p
-hdfsGetLastError.__doc__ = """Return error information of last failed operation.
-
-return A not NULL const string point of last error information.
-Caller can only read this message and keep it unchanged. No need to free it.
-If last operation finished successfully, the returned message is undefined."""
+# hdfsGetLastError = _lib.hdfsGetLastError
+# hdfsGetLastError.argtypes = []
+# hdfsGetLastError.restype = ct.c_char_p
+# hdfsGetLastError.__doc__ = """Return error information of last failed operation.
+#
+# return A not NULL const string point of last error information.
+# Caller can only read this message and keep it unchanged. No need to free it.
+# If last operation finished successfully, the returned message is undefined."""
 
 hdfsFileIsOpenForRead = _lib.hdfsFileIsOpenForRead
 hdfsFileIsOpenForRead.argtypes = [ct.POINTER(hdfsFile)]
@@ -207,13 +208,13 @@ param bld The HDFS builder
 param kerbTicketCachePath The Kerberos ticket cache path.  The string
                             will be shallow-copied."""
 
-hdfsBuilderSetToken = _lib.hdfsBuilderSetToken
-hdfsBuilderSetToken.argtypes = [ct.POINTER(hdfsBuilder), ct.c_char_p]
-hdfsBuilderSetToken.restype = None
-hdfsBuilderSetToken.__doc__ = """Set the token used to authenticate
-
-param bld The HDFS builder
-param token The token used to authenticate"""
+# hdfsBuilderSetToken = _lib.hdfsBuilderSetToken
+# hdfsBuilderSetToken.argtypes = [ct.POINTER(hdfsBuilder), ct.c_char_p]
+# hdfsBuilderSetToken.restype = None
+# hdfsBuilderSetToken.__doc__ = """Set the token used to authenticate
+#
+# param bld The HDFS builder
+# param token The token used to authenticate"""
 
 hdfsFreeBuilder = _lib.hdfsFreeBuilder
 hdfsFreeBuilder.argtypes = [ct.POINTER(hdfsBuilder)]
@@ -329,22 +330,22 @@ param buffer The data.
 param length The no. of bytes to write.
 return Returns the number of bytes written, -1 on error."""
 
-hdfsHFlush = _lib.hdfsHFlush
-hdfsHFlush.argtypes = [ct.POINTER(hdfsFS), ct.POINTER(hdfsFile)]
-hdfsHFlush.__doc__ = """Flush the data.
+# hdfsHFlush = _lib.hdfsHFlush
+# hdfsHFlush.argtypes = [ct.POINTER(hdfsFS), ct.POINTER(hdfsFile)]
+# hdfsHFlush.__doc__ = """Flush the data.
+#
+# param fs The configured filesystem handle.
+# param file The file handle.
+# return Returns 0 on success, -1 on error."""
 
-param fs The configured filesystem handle.
-param file The file handle.
-return Returns 0 on success, -1 on error."""
-
-hdfsSync = _lib.hdfsSync
-hdfsSync.argtypes = [ct.POINTER(hdfsFS), ct.POINTER(hdfsFile)]
-hdfsSync.__doc__ = """Flush out and sync the data in client's user buffer.
-After the return of this call, new readers will see the data.
-
-param fs configured filesystem handle
-param file file handle
-return 0 on success, -1 on error and sets errno"""
+# hdfsSync = _lib.hdfsSync
+# hdfsSync.argtypes = [ct.POINTER(hdfsFS), ct.POINTER(hdfsFile)]
+# hdfsSync.__doc__ = """Flush out and sync the data in client's user buffer.
+# After the return of this call, new readers will see the data.
+#
+# param fs configured filesystem handle
+# param file file handle
+# return 0 on success, -1 on error and sets errno"""
 
 hdfsAvailable = _lib.hdfsAvailable
 hdfsAvailable.argtypes = [ct.POINTER(hdfsFS), ct.POINTER(hdfsFile)]
@@ -522,54 +523,54 @@ param mtime new modification time or -1 for no change
 param atime new access time or -1 for no change
 return 0 on success else -1"""
 
-hdfsTruncate = _lib.hdfsTruncate
-hdfsTruncate.argtypes = [ct.POINTER(hdfsFS), ct.c_char_p, tOffset, ct.c_int]
-hdfsTruncate.__doc__ = """Truncate the file in the indicated path to the indicated size.
+# hdfsTruncate = _lib.hdfsTruncate
+# hdfsTruncate.argtypes = [ct.POINTER(hdfsFS), ct.c_char_p, tOffset, ct.c_int]
+# hdfsTruncate.__doc__ = """Truncate the file in the indicated path to the indicated size.
+#
+# param fs The configured filesystem handle.
+# param path the path to the file.
+# param pos the position the file will be truncated to.
+# param shouldWait output value, true if and client does not need to wait for block recovery,
+# false if client needs to wait for block recovery."""
 
-param fs The configured filesystem handle.
-param path the path to the file.
-param pos the position the file will be truncated to.
-param shouldWait output value, true if and client does not need to wait for block recovery,
-false if client needs to wait for block recovery."""
+# hdfsGetDelegationToken = _lib.hdfsGetDelegationToken
+# hdfsGetDelegationToken.argtypes = [ct.POINTER(hdfsFS), ct.c_char_p]
+# hdfsGetDelegationToken.restype = ct.c_char_p
+# hdfsGetDelegationToken.__doc__ = """Get a delegation token from namenode.
+# The token should be freed using hdfsFreeDelegationToken after canceling the token or token expired.
+#
+# param fs The file system
+# param renewer The user who will renew the token
+# return Return a delegation token, NULL on error."""
 
-hdfsGetDelegationToken = _lib.hdfsGetDelegationToken
-hdfsGetDelegationToken.argtypes = [ct.POINTER(hdfsFS), ct.c_char_p]
-hdfsGetDelegationToken.restype = ct.c_char_p
-hdfsGetDelegationToken.__doc__ = """Get a delegation token from namenode.
-The token should be freed using hdfsFreeDelegationToken after canceling the token or token expired.
+# hdfsFreeDelegationToken = _lib.hdfsFreeDelegationToken
+# hdfsFreeDelegationToken.argtypes = [ct.c_char_p]
+# hdfsFreeDelegationToken.restype = None
+# hdfsFreeDelegationToken.__doc__ = """Free a delegation token.
+#
+# param token The token to be freed."""
 
-param fs The file system
-param renewer The user who will renew the token
-return Return a delegation token, NULL on error."""
+# hdfsRenewDelegationToken = _lib.hdfsRenewDelegationToken
+# hdfsRenewDelegationToken.argtypes = [ct.POINTER(hdfsFS), ct.c_char_p]
+# hdfsRenewDelegationToken.restype = ct.c_int64
+# hdfsRenewDelegationToken.__doc__ = """Renew a delegation token.
+#
+# param fs The file system.
+# param token The token to be renewed.
+# return the new expiration time"""
 
-hdfsFreeDelegationToken = _lib.hdfsFreeDelegationToken
-hdfsFreeDelegationToken.argtypes = [ct.c_char_p]
-hdfsFreeDelegationToken.restype = None
-hdfsFreeDelegationToken.__doc__ = """Free a delegation token.
+# hdfsCancelDelegationToken = _lib.hdfsCancelDelegationToken
+# hdfsCancelDelegationToken.argtypes = [ct.POINTER(hdfsFS), ct.c_char_p]
+# hdfsCancelDelegationToken.__doc__ = """Cancel a delegation token.
+#
+# param fs The file system.
+# param token The token to be canceled.
+# return return 0 on success, -1 on error."""
 
-param token The token to be freed."""
-
-hdfsRenewDelegationToken = _lib.hdfsRenewDelegationToken
-hdfsRenewDelegationToken.argtypes = [ct.POINTER(hdfsFS), ct.c_char_p]
-hdfsRenewDelegationToken.restype = ct.c_int64
-hdfsRenewDelegationToken.__doc__ = """Renew a delegation token.
-
-param fs The file system.
-param token The token to be renewed.
-return the new expiration time"""
-
-hdfsCancelDelegationToken = _lib.hdfsCancelDelegationToken
-hdfsCancelDelegationToken.argtypes = [ct.POINTER(hdfsFS), ct.c_char_p]
-hdfsCancelDelegationToken.__doc__ = """Cancel a delegation token.
-
-param fs The file system.
-param token The token to be canceled.
-return return 0 on success, -1 on error."""
-
-hdfsFreeFileBlockLocations = _lib.hdfsFreeFileBlockLocations
-hdfsFreeFileBlockLocations.argtypes = [ct.POINTER(BlockLocation), ct.c_int]
-hdfsFreeFileBlockLocations.restype = None
-hdfsFreeFileBlockLocations.__doc__ = """Free the BlockLocation array returned by hdfsGetFileBlockLocations
-
-param locations The array returned by hdfsGetFileBlockLocations
-param numOfBlock The number of elements in the locations"""
+# hdfsFreeFileBlockLocations = _lib.hdfsFreeFileBlockLocations
+# hdfsFreeFileBlockLocations.argtypes = [ct.POINTER(BlockLocation), ct.c_int]
+# hdfsFreeFileBlockLocations.restype = None
+# hdfsFreeFileBlockLocations.__doc__ = """Free the BlockLocation array returned by hdfsGetFileBlockLocations
+#
+# param locations The array returned by hdfsGetFileBlockLocations
+# param numOfBlock The number of elements in the locations"""

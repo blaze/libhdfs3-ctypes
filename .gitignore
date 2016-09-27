@@ -1,2 +1,5 @@
 *.pyc
 docs/build
+.cache
+*.iml
+*.egg-info
