@@ -1,3 +1,6 @@
 *.pyc
 docs/build
 *.egg-info/
+.cache/
+build/
+dist/
