@@ -8,6 +8,7 @@ import os
 import sys
 import re
 import warnings
+import functools
 from collections import deque
 from .lib import _lib
 
@@ -488,7 +489,7 @@ class HDFileSystem(object):
         """ Copy local file to path in HDFS """
         with open(filename, 'rb') as local:
             self.putiter(
-                iter(partial(local.read, chunk), b''),
+                iter(functools.partial(local.read, chunk), b''),
                 path,
                 chunk=chunk,
                 replication=replication,
