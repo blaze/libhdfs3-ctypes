@@ -491,14 +491,11 @@ class HDFileSystem(object):
             self.putiter(
                 iter(functools.partial(local.read, chunk), b''),
                 path,
-                chunk=chunk,
                 replication=replication,
                 block_size=block_size,
             )
 
-    def putiter(
-        self, iterator, path, chunk=2 ** 16, replication=0, block_size=0
-    ):
+    def putiter(self, iterator, path, replication=0, block_size=0):
         """ Copy an iterator of bytes to a path in HDFS """
         with self.open(
             path, 'wb', replication=replication, block_size=block_size
