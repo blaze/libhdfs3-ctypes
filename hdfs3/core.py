@@ -8,6 +8,7 @@ import os
 import sys
 import re
 import warnings
+import functools
 from collections import deque
 from .lib import _lib
 
@@ -489,15 +490,23 @@ class HDFileSystem(object):
                         out = f.read(blocksize)
                         f2.write(out)
 
-    def put(self, filename, path, chunk=2**16, replication=0,block_size=0):
+    def put(self, filename, path, chunk=2 ** 16, replication=0, block_size=0):
         """ Copy local file to path in HDFS """
-        with self.open(path, 'wb',replication=replication,block_size=block_size) as f:
-            with open(filename, 'rb') as f2:
-                while True:
-                    out = f2.read(chunk)
-                    if len(out) == 0:
-                        break
-                    f.write(out)
+        with open(filename, 'rb') as local:
+            self.putiter(
+                iter(functools.partial(local.read, chunk), b''),
+                path,
+                replication=replication,
+                block_size=block_size,
+            )
+
+    def putiter(self, iterator, path, replication=0, block_size=0):
+        """ Copy an iterator of bytes to a path in HDFS """
+        with self.open(
+            path, 'wb', replication=replication, block_size=block_size
+        ) as hdfs:
+            for blob in iterator:
+                hdfs.write(blob)
 
     def tail(self, path, size=1024):
         """ Return last bytes of file """
