@@ -866,3 +866,21 @@ def test_array(hdfs):
     with hdfs.open(a, 'rb') as f:
         out = f.read()
         assert out == b'A' * 1000
+
+
+def test_read_after_readline(hdfs):
+    mem_f = io.BytesIO()
+
+    data = b'aaaaaaaaaaaa\nbbbbbbbbbbbbb\ncccccccccc\nddddddddddddd'
+    mem_f.write(data)
+    mem_f.seek(0)
+
+    with hdfs.open(a, 'wb') as hdfs_f:
+        hdfs_f.write(data)
+
+    with hdfs.open(a, 'rb') as hdfs_f:
+        assert hdfs_f.read(3) == mem_f.read(3)
+        assert hdfs_f.readline() == mem_f.readline()
+        assert hdfs_f.read(5) == mem_f.read(5)
+        assert hdfs_f.readline() == mem_f.readline()
+        assert hdfs_f.read() == mem_f.read()

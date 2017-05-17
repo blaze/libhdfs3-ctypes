@@ -14,7 +14,7 @@ from .lib import _lib
 PY3 = sys.version_info.major > 2
 
 from .compatibility import FileNotFoundError, urlparse, ConnectionError
-from .utils import read_block, seek_delimiter
+from .utils import read_block
 
 
 logger = logging.getLogger(__name__)
@@ -612,36 +612,50 @@ class HDFile(object):
                           (self.path, self.mode, msg))
         self._handle = out
 
+    def _fetch_hdfs(self, length=None):
+        """Fill internal read buffer."""
+        bufsize = min(2**16, length)
+        p = ctypes.create_string_buffer(bufsize)
+        ret = _lib.hdfsRead(self._fs, self._handle,
+                            p, ctypes.c_int32(bufsize))
+        if ret == 0:
+            return ret
+        elif ret >= 0:
+            self.buffers.append(p.raw[:ret])
+            return ret
+        else:
+            raise IOError('Read file %s Failed:' % self.path, -ret)
+
     def read(self, length=None):
         """ Read bytes from open file """
         if not _lib.hdfsFileIsOpenForRead(self._handle):
             raise IOError('File not read mode')
-        buffers = []
 
         if length is None:
-            out = 1
-            while out:
-                out = self.read(2**16)
-                buffers.append(out)
+            while self._fetch_hdfs(2**16):
+                pass
+            result = b''.join(self.buffers)
+            self.buffers = []
         else:
+            read_buf = []
             while length:
-                bufsize = min(2**16, length)
-                p = ctypes.create_string_buffer(bufsize)
-                ret = _lib.hdfsRead(self._fs, self._handle, p, ctypes.c_int32(bufsize))
-                if ret == 0:
-                    break
-                if ret > 0:
-                    if ret < bufsize:
-                        buffers.append(p.raw[:ret])
-                    elif ret == bufsize:
-                        buffers.append(p.raw)
-                    length -= ret
+                self._fetch_hdfs(2**16)
+                if len(self.buffers):
+                    out = self.buffers.pop(0)
+                    if len(out) > length:
+                        read_buf.append(out[:length])
+                        self.buffers.insert(0, out[length:])
+                        length = 0
+                    else:
+                        read_buf.append(out)
+                        length -= len(out)
                 else:
-                    raise IOError('Read file %s Failed:' % self.path, -ret)
+                    break
+            result = b''.join(read_buf)
 
-        return b''.join(buffers)
+        return result
 
-    def readline(self, chunksize=2**8, lineterminator='\n'):
+    def readline(self, chunksize=2**16, lineterminator='\n'):
         """ Return a line using buffered reading.
 
         Reads and caches chunksize bytes of data, and caches lines
@@ -654,11 +668,25 @@ class HDFile(object):
         Line iteration uses this method internally.
         """
         lineterminator = ensure_bytes(lineterminator)
-        start = self.tell()
-        seek_delimiter(self, lineterminator, chunksize, allow_zero=False)
-        end = self.tell()
-        self.seek(start)
-        return self.read(end - start)
+        line_buffer = []
+        while True:
+            ret = 1
+            if len(self.buffers):
+                out = self.buffers.pop(0)
+                terminator_position = out.find(lineterminator)
+                if terminator_position == -1:
+                    line_buffer.append(out)
+                else:
+                    endline, remaining = out.split(lineterminator, 1)
+                    line_buffer.append(endline)
+                    line_buffer.append(lineterminator)
+                    self.buffers.insert(0, remaining)
+                    break
+            else:
+                ret = self._fetch_hdfs(chunksize)
+            if ret == 0:
+                break
+        return b''.join(line_buffer)
 
     def _genline(self):
         while True:
