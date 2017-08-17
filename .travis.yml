@@ -11,24 +11,12 @@ services:
 
 before_install:
   - pwd
-  - echo $PYTHON_VERSION
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      export DOCKER_ENV=/opt/conda;
-    else
-      export DOCKER_ENV=/opt/conda/envs/py3;
-    fi
-  - pushd continuous_integration
-  - docker build -t libhdfs3.hdfs .
-  - popd
-  - docker run -d -p 8020:8020 -p 50070:50070 -v $(pwd):/hdfs3 libhdfs3.hdfs
-  - export CONTAINER_ID=$(docker ps -l -q)
-  - sleep 60  # Wait for namenode and datanode
+  - echo $TRAVIS_PYTHON_VERSION
+  - docker run -d -p 8020:8020 -p 50070:50070 mdurant/docker_images:hadoop
+  - sleep 20  # Wait for namenode and datanode
 
 install:
-  - pwd
-  - echo $DOCKER_ENV
-  - docker exec -it $CONTAINER_ID $DOCKER_ENV/bin/python setup.py install
+  - run.sh
 
 script:
-  - pwd
-  - docker exec -it $CONTAINER_ID $DOCKER_ENV/bin/py.test hdfs3 -s -vv
+  - py.test hdfs3 -vv
