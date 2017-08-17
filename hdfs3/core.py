@@ -86,7 +86,6 @@ class HDFileSystem(object):
         self._handle = None
         self.connect()
 
-
     def connect(self):
         """ Connect to the name node
 
@@ -150,7 +149,8 @@ class HDFileSystem(object):
     def disconnect(self):
         """ Disconnect from name node """
         if self._handle:
-            logger.debug("Disconnect from handle %d", self._handle.contents.filesystem)
+            logger.debug("Disconnect from handle %d",
+                         self._handle.contents.filesystem)
             _lib.hdfsDisconnect(self._handle)
         self._handle = None
 
@@ -518,6 +518,7 @@ def info_to_dict(s):
 
 mode_numbers = {'w': 1, 'r': 0, 'a': 1025,
                 'wb': 1, 'rb': 0, 'ab': 1025}
+
 
 class HDFile(object):
     """ File on HDFS
