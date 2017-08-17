@@ -84,7 +84,12 @@ def conf_to_dict(fname):
 
 
 def guess_config():
-    """ Look for config files in common places """
+    """ Look for config files in common places.
+     
+    If no conf files are found at all, current config is not changed (i.e.,
+    if you want to revert to Hadoop defaults, do
+    ``conf.clear(); conf.update(conf_defaults()``.
+    """
     d = None
     if 'LIBHDFS3_CONF' in os.environ:
         if not os.path.exists(os.environ['LIBHDFS3_CONF']):

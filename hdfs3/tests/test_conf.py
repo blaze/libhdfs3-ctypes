@@ -96,6 +96,8 @@ def test_with_file(simple_conf_file):
 
 
 def test_default_port_and_host(no_conf):
+    conf.clear()
+    conf.update(conf_defaults)
     guess_config()
     hdfs = HDFileSystem(connect=False)
     assert hdfs.host == conf_defaults['host']
