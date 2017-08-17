@@ -16,7 +16,7 @@ before_install:
   - sleep 20  # Wait for namenode and datanode
 
 install:
-  - run.sh
+  - continuous_integration/run.sh
 
 script:
   - py.test hdfs3 -vv
