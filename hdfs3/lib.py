@@ -59,7 +59,7 @@ class EncryptionFileInfo(ct.Structure):
 
 
 class EncryptionZoneInfo(ct.Structure):
-    _fileds_ = [('suite', ct.c_int),
+    _fields_ = [('suite', ct.c_int),
                 ('protocol_version', ct.c_int),
                 ('mId', ct.c_int64),
                 ('path', ct.c_char_p),
