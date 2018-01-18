@@ -12,7 +12,6 @@ from tornado import gen
 
 import dask
 from dask import delayed
-from dask.delayed import Delayed
 from dask.bytes.core import read_bytes, write_bytes
 
 from distributed import Client
@@ -52,67 +51,6 @@ def cluster(*args, **kwargs):
     return cluster(*args, **kwargs)
 
 
-def test_get_block_locations():
-    with make_hdfs() as (hdfs, basedir):
-        data = b'a' * int(1e8)  # todo: reduce block size to speed up test
-        fn_1 = '%s/file1' % basedir
-        fn_2 = '%s/file2' % basedir
-
-        with hdfs.open(fn_1, 'wb', replication=1) as f:
-            f.write(data)
-        with hdfs.open(fn_2, 'wb', replication=1) as f:
-            f.write(data)
-
-        aa = hdfs.get_block_locations(fn_1)
-        bb = hdfs.get_block_locations(fn_2)
-        assert len(aa) == len(bb) == 2
-        assert all(a['hosts'] for a in aa + bb)
-        assert aa[0]['offset'] == 0
-        assert aa[1]['offset'] == aa[0]['length']
-        assert bb[0]['offset'] == 0
-        assert bb[1]['offset'] == bb[0]['length']
-
-
-def test_get_block_locations_nested():
-    with make_hdfs() as (hdfs, basedir):
-        data = b'a'
-
-        for i in range(3):
-            hdfs.mkdir('%s/data-%d' % (basedir, i))
-            for j in range(2):
-                filename = '%s/data-%d/file-%d.csv' % (basedir, i, j)
-                with hdfs.open(filename, 'wb', replication=1) as f:
-                    f.write(data)
-
-        L = [hdfs.get_block_locations(fn)
-             for fn in hdfs.glob('%s/*/*.csv' % basedir)]
-        L = list(concat(L))
-        assert len(L) == 6
-
-
-@gen_cluster([(ip, 1), (ip, 2)], timeout=60, client=True)
-def test_get_block_locations_nested_2(e, s, a, b):
-    with make_hdfs() as (hdfs, basedir):
-        data = b'a'
-
-        for i in range(3):
-            hdfs.mkdir('%s/data-%d' % (basedir, i))
-            for j in range(2):
-                fn = '%s/data-%d/file-%d.csv' % (basedir, i, j)
-                with hdfs.open(fn, 'wb', replication=1) as f:
-                    f.write(data)
-
-        L = list(concat(hdfs.get_block_locations(fn)
-                        for fn in hdfs.glob('%s/data-*/*.csv' % basedir)))
-        assert len(L) == 6
-
-        sample, values = read_bytes('hdfs://%s/*/*.csv' % basedir)
-        futures = e.compute(list(concat(values)))
-        results = yield e._gather(futures)
-        assert len(results) == 6
-        assert all(x == b'a' for x in results)
-
-
 @gen_cluster([(ip, 1), (ip, 2)], timeout=60, client=True)
 def test_read_bytes(c, s, a, b):
     with make_hdfs() as (hdfs, basedir):
@@ -122,24 +60,12 @@ def test_read_bytes(c, s, a, b):
         with hdfs.open(fn, 'wb', replication=1) as f:
             f.write(data)
 
-        blocks = hdfs.get_block_locations(fn)
-        assert len(blocks) > 1
-
         sample, values = read_bytes('hdfs://' + fn)
         assert sample[:5] == b'aaaaa'
-        assert len(values[0]) == len(blocks)
-
-        while not s.host_restrictions:
-            yield gen.sleep(0.01)
-        assert not s.tasks
-
-        assert {v.key for v in values[0]} == set(s.host_restrictions)
-        assert {v.key for v in values[0]} == set(s.loose_restrictions)
 
         futures = c.compute(values[0])
         results = yield c._gather(futures)
         assert b''.join(results) == data
-        assert s.host_restrictions
 
 
 @pytest.mark.parametrize('nworkers', [1, 3])
@@ -172,32 +98,6 @@ def test_read_bytes_sync_URL(loop, nworkers=1):
                 sample, values = read_bytes(path)
                 results = delayed(values).compute()
                 assert [b''.join(r) for r in results] == 100 * [data]
-
-
-@gen_cluster([(ip, 1), (ip, 2)], timeout=60, client=True)
-def test_lazy_values(e, s, a, b):
-    with make_hdfs() as (hdfs, basedir):
-        data = b'a'
-
-        for i in range(3):
-            hdfs.mkdir('%s/data-%d' % (basedir, i))
-            for j in range(2):
-                fn = '%s/data-%d/file-%d.csv' % (basedir, i, j)
-                with hdfs.open(fn, 'wb', replication=1) as f:
-                    f.write(data)
-
-        sample, values = read_bytes('hdfs://%s/*/*.csv' % basedir)
-        assert all(isinstance(v, list) for v in values)
-        assert all(isinstance(v, Delayed) for vv in values for v in vv)
-
-        while not s.host_restrictions:
-            yield gen.sleep(0.01)
-        assert not s.tasks
-
-        results = e.compute(list(concat(values)), sync=False)
-        results = yield e._gather(results)
-        assert len(results) == 6
-        assert all(x == b'a' for x in results)
 
 
 @gen_cluster([(ip, 1), (ip, 2)], timeout=60, client=True)
