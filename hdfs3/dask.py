@@ -71,19 +71,6 @@ class DaskHDFileSystem(HDFileSystem):
         path = self._trim_filename(path)
         return self.info(path)['size']
 
-    def get_block_locations(self, paths):
-        offsets = []
-        lengths = []
-        machines = []
-        for path in paths:
-            path = self._trim_filename(path)
-            out = super(DaskHDFileSystem, self).get_block_locations(path)
-            offsets.append([o['offset'] for o in out])
-            lengths.append([o['length'] for o in out])
-            hosts = [[self._decode_hostname(h) for h in o['hosts']] for o in out]
-            machines.append(hosts)
-        return offsets, lengths, machines
-
     def _get_pyarrow_filesystem(self):
         from ._pyarrow import HDFSWrapper
         return HDFSWrapper(self)
