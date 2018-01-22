@@ -1,9 +1,16 @@
 from __future__ import print_function, division, absolute_import
 
+import warnings
+
 from dask.base import tokenize
 from dask.bytes import core
 
 from .core import HDFileSystem
+
+warnings.warn("DeprecationWarning: `hdfs3.dask` is deprecated and will be "
+              "removed in the next release. Dask hdfs functionality has "
+              "migrated to `dask.bytes.hdfs`. Please update your version of "
+              "dask to > 0.16.1")
 
 
 class DaskHDFileSystem(HDFileSystem):
