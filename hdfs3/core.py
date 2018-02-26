@@ -134,7 +134,7 @@ class HDFileSystem(object):
                                               ensure_bytes(val)) == 0:
                 warnings.warn('Setting conf parameter %s failed' % par)
 
-        fs = _lib.hdfsBuilderConnect(o)
+        fs = _lib.hdfsBuilderConnect(o, None)
         _lib.hdfsFreeBuilder(o)
         if fs:
             logger.debug("Connect to handle %d", fs.contents.filesystem)
