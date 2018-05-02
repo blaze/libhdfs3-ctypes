@@ -8,9 +8,10 @@ import os
 import posixpath
 import re
 import warnings
+import operator
 from collections import deque
 
-from .compatibility import FileNotFoundError, ConnectionError
+from .compatibility import FileNotFoundError, ConnectionError, PY3
 from .conf import conf
 from .utils import (read_block, seek_delimiter, ensure_bytes, ensure_string,
                     ensure_trailing_slash, MyNone)
@@ -20,6 +21,13 @@ _lib = None
 
 DEFAULT_READ_BUFFER_SIZE = 2 ** 16
 DEFAULT_WRITE_BUFFER_SIZE = 2 ** 26
+
+
+def _nbytes(buf):
+    buf = memoryview(buf)
+    if PY3:
+        return buf.nbytes
+    return buf.itemsize * reduce(operator.mul, buf.shape)
 
 
 class HDFileSystem(object):
@@ -711,8 +719,8 @@ class HDFile(object):
     def readinto(self, length, out):
         """
         Read up to ``length`` bytes from the file into the ``out`` buffer,
-        which can be of any type that implements the buffer protocol (example: bytearray,
-        memoryview, numpy array, ...).
+        which can be of any type that implements the buffer protocol (example: ``bytearray``,
+        ``memoryview`` (py3 only), numpy array, ...).
 
         Parameters
         ----------
@@ -733,8 +741,8 @@ class HDFile(object):
         bufpos = 0
 
         # convert from buffer protocol to ctypes-compatible type
-        out = memoryview(out)
-        buf_for_ctypes = (ctypes.c_byte * out.nbytes).from_buffer(out)
+        buflen = _nbytes(out)
+        buf_for_ctypes = (ctypes.c_byte * buflen).from_buffer(out)
 
         while length:
             bufp = ctypes.byref(buf_for_ctypes, bufpos)
@@ -756,7 +764,7 @@ class HDFile(object):
 
         If ``out_buffer`` is given, read directly into ``out_buffer``. It can be
         anything that implements the buffer protocol, for example ``bytearray``,
-        ``memoryview``, numpy arrays, ...
+        ``memoryview`` (py3 only), numpy arrays, ...
 
         Parameters
         ----------
@@ -783,20 +791,19 @@ class HDFile(object):
         read_length = min(max_read, read_length)
 
         if out_buffer is None or out_buffer is True:
-            out_buffer = memoryview(bytearray(read_length))
+            out_buffer = bytearray(read_length)
         else:
-            out_buffer = memoryview(out_buffer)
-            if out_buffer.nbytes < read_length:
-                raise IOError('buffer too small (%d < %d)' % (out_buffer.nbytes, read_length))
+            if _nbytes(out_buffer) < read_length:
+                raise IOError('buffer too small (%d < %d)' % (_nbytes(out_buffer), read_length))
 
         bytes_read = self.readinto(length=read_length, out=out_buffer)
 
-        if bytes_read < out_buffer.nbytes:
-            out_buffer = out_buffer[:bytes_read]
+        if bytes_read < _nbytes(out_buffer):
+            out_buffer = memoryview(out_buffer)[:bytes_read]
 
         if return_buffer:
-            return out_buffer
-        return out_buffer.tobytes()
+            return memoryview(out_buffer)
+        return memoryview(out_buffer).tobytes()
 
     def readline(self, chunksize=0, lineterminator='\n'):
         """ Return a line using buffered reading.
