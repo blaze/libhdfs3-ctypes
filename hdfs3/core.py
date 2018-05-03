@@ -9,6 +9,7 @@ import posixpath
 import re
 import warnings
 import operator
+import functools
 from collections import deque
 
 from .compatibility import FileNotFoundError, ConnectionError, PY3
@@ -27,7 +28,7 @@ def _nbytes(buf):
     buf = memoryview(buf)
     if PY3:
         return buf.nbytes
-    return buf.itemsize * reduce(operator.mul, buf.shape)
+    return buf.itemsize * functools.reduce(operator.mul, buf.shape)
 
 
 class HDFileSystem(object):
