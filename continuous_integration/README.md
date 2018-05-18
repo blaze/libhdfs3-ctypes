@@ -17,7 +17,7 @@ docker build -t daskdev/hdfs3dev continuous_integration/
 - Start the container and wait for it to be ready:
 
 ```bash
-source continuous_integration/startup_hdfs.sh
+source continuous_integration/setup_hdfs.sh
 ```
 
 - Start a bash session in the running container:
@@ -35,4 +35,11 @@ docker exec -it $CONTAINER_ID bash
 ```bash
 python setup.py install
 py.test hdfs3 -s -vv
+```
+
+To run the tests on Python 2.7:
+
+```bash
+/opt/conda/envs/py27/bin/python setup.py install
+/opt/conda/envs/py27/bin/py.test hdfs3 -s -vv
 ```

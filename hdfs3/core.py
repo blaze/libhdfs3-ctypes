@@ -39,7 +39,7 @@ class HDFileSystem(object):
     _first_pid = None
 
     def __init__(self, host=MyNone, port=MyNone, connect=True, autoconf=True,
-                 pars=None, **kwargs):
+                 pars=None, crc=True, **kwargs):
         """
         Parameters
         ----------
@@ -52,6 +52,8 @@ class HDFileSystem(object):
         autoconf: bool (True)
             Whether to use the configuration found in the conf module as
             the set of defaults
+        crc: bool (True)
+            Enable/disable CRC verification
         pars : {str: str}
             any parameters for hadoop, that you can find in hdfs-site.xml,
             https://hadoop.apache.org/docs/r2.6.0/hadoop-project-dist/hadoop-hdfs/hdfs-default.xml
@@ -77,6 +79,8 @@ class HDFileSystem(object):
             self.conf['host'] = host
         if port is not MyNone:
             self.conf['port'] = port
+        if not crc:
+            self.conf['input.read.default.verify'] = '0'
 
         self._handle = None
 

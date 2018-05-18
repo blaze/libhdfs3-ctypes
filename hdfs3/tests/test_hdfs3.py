@@ -78,6 +78,31 @@ def test_idempotent_connect(hdfs):
     hdfs.connect()
 
 
+def test_disable_crc():
+    hdfs = HDFileSystem(host=test_host, port=test_port,
+                        pars={'rpc.client.connect.retry': '2'}, crc=False)
+
+    assert 'input.read.default.verify' in hdfs.conf
+
+    if hdfs.exists('/tmp/test'):
+        hdfs.rm('/tmp/test')
+    hdfs.mkdir('/tmp/test')
+
+    data = b'a' * (10 * 2**20)
+
+    with hdfs.open(a, 'wb', replication=1) as f:
+        f.write(data)
+
+    with hdfs.open(a, 'rb') as f:
+        out = f.read(len(data))
+        assert len(data) == len(out)
+        assert out == data
+
+    if hdfs.exists('/tmp/test'):
+        hdfs.rm('/tmp/test', recursive=True)
+    hdfs.disconnect()
+
+
 def test_ls_touch(hdfs):
     assert not hdfs.ls('/tmp/test')
     hdfs.touch(a)
