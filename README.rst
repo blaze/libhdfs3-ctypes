@@ -23,5 +23,5 @@ View the documentation_ for hdfs3.
 .. _libhdfs3: https://github.com/ContinuumIO/libhdfs3-downstream/tree/master/libhdfs3
 .. _documentation: https://hdfs3.readthedocs.io/en/latest/
 
-.. |Build Status| image:: https://travis-ci.org/dask/hdfs3.svg?branch=master
+.. |Build Status| image:: https://travis-ci.org/dask/hdfs3.svg?branch=main
     :target: https://travis-ci.org/dask/hdfs3
